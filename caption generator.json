@@ -1,0 +1,183 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.UPLOAD[0].filename }}",
+        "dataPropertyName": "=UPLOAD",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        -16
+      ],
+      "id": "0c8fc69b-3aa7-4097-be7f-025bea4e2040",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "formTitle": "Upload Your Photo",
+        "formDescription": "Upload your photo to get a perfect caption.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "UPLOAD",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Enter your Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "You can also create with your own prompt.",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "path": "",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Get in your registered email"
+            }
+          },
+          "customCss": ":root {\n\t--font-family: 'Inter', system-ui, sans-serif;\n\t--font-weight-normal: 400;\n\t--font-weight-bold: 600;\n\n\t--color-bg: #f8fafc;\n\t--color-card: #ffffff;\n\t--color-border: #e5e7eb;\n\t--color-text: #111827;\n\t--color-muted: #6b7280;\n\t--color-primary: #6366f1;\n\t--color-primary-glow: rgba(99, 102, 241, 0.4);\n\t--color-error: #ef4444;\n\n\t--radius-card: 14px;\n\t--radius-input: 10px;\n\n\t--shadow-soft: 0 10px 30px rgba(0,0,0,0.06);\n\t--transition: 0.25s ease;\n}\n"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -272,
+        -16
+      ],
+      "id": "62e47726-9862-41f2-beca-2229ee043f55",
+      "name": "On form submission",
+      "webhookId": "11dd2d03-add0-4856-b783-89f86a318fab"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Just give a caption for the image. \nThe caption should be related to the picture.\nAlso give only one line caption. Not more than that.\nAlso the caption must be like asthetic one.\n\nThe image is:   {{ $json.UPLOAD[0].filename }}\n\nAlso use the person prompt and give the output.\nthe prompt is: {{ $('On form submission').item.json['You can also creat with your own prompt.'] }}\n\nIf the person donot give any prompt than give your own quote.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        128,
+        -16
+      ],
+      "id": "0070b760-0401-4dca-af24-15a23524d450",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        192
+      ],
+      "id": "2c84dad4-f9a4-4944-9f54-77b8bf57e167",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NQUx5Lq2TiBsnlzo",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['Enter your Email'] }}",
+        "subject": "Image Caption!",
+        "emailType": "text",
+        "message": "=The caption for your image is: {{ $json.output }}\n\n\nNote: This is an automated email. Please donot replay.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        -16
+      ],
+      "id": "da313f33-ac3d-4ca3-896d-33203939d0a6",
+      "name": "Send a message",
+      "webhookId": "00dd599b-d70e-4f30-a818-eed3b4fcfc7a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "551F2lH6UZcvuX9i",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "eb75de93-9dd6-4810-a55e-0f9ab6b6721c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e42f3dfc8fff18bb9b70f69ebda73c18de9af78a2eaff7986044908e0abbd4a5"
+  },
+  "id": "-6HranSAXscU-1j9OMOIE",
+  "tags": []
+}
